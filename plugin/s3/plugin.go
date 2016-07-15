@@ -78,6 +78,7 @@ const (
 	DefaultPrefix            = ""
 	DefaultSigVersion        = "4"
 	DefaultSkipSSLValidation = false
+	DefaultSkipSSL           = false
 )
 
 func validSigVersion(v string) bool {
@@ -103,6 +104,7 @@ type S3Plugin plugin.PluginInfo
 type S3ConnectionInfo struct {
 	Host              string
 	SkipSSLValidation bool
+	SkipSSL           bool
 	AccessKey         string
 	SecretKey         string
 	Bucket            string
@@ -193,6 +195,16 @@ func (p S3Plugin) Validate(endpoint plugin.ShieldEndpoint) error {
 		ansi.Printf("@G{\u2713 skip_ssl_validation}  @C{yes}, SSL will @Y{NOT} be validated\n")
 	} else {
 		ansi.Printf("@G{\u2713 skip_ssl_validation}  @C{no}, SSL @Y{WILL} be validated\n")
+	}
+
+	tf, err := endpoint.BooleanValueDefault("skip_ssl", DefaultSkipSSL)
+	if err != nil {
+		ansi.Printf("@R{\u2717 skip_ssl  %s}\n", err)
+		fail = true
+	} else if tf {
+		ansi.Printf("@G{\u2713 skip_ssl}  @C{yes}, SSL will @Y{NOT} be disabled\n")
+	} else {
+		ansi.Printf("@G{\u2713 skip_ssl}  @C{no}, SSL @Y{WILL} be disabled\n")
 	}
 
 	if fail {
@@ -286,6 +298,11 @@ func getS3ConnInfo(e plugin.ShieldEndpoint) (S3ConnectionInfo, error) {
 		return S3ConnectionInfo{}, err
 	}
 
+	disable_ssl, err := e.BooleanValueDefault("skip_ssl_validation", DefaultSkipSSL)
+	if err != nil {
+		return S3ConnectionInfo{}, err
+	}
+
 	key, err := e.StringValue("access_key_id")
 	if err != nil {
 		return S3ConnectionInfo{}, err
@@ -319,6 +336,7 @@ func getS3ConnInfo(e plugin.ShieldEndpoint) (S3ConnectionInfo, error) {
 	return S3ConnectionInfo{
 		Host:              host,
 		SkipSSLValidation: insecure_ssl,
+		SkipSSL:           disable_ssl,
 		AccessKey:         key,
 		SecretKey:         secret,
 		Bucket:            bucket,
@@ -359,7 +377,11 @@ func (s3 S3ConnectionInfo) Connect() (*minio.Client, error) {
 		transport.(*http.Transport).Dial = dialer.Dial
 	}
 
-	s3Client.SetCustomTransport(transport)
+	if s3.SkipSSL == false {
+		s3Client.SetCustomTransport(transport)
+	} else {
+		s3Client
+	}
 
 	return s3Client, nil
 }
