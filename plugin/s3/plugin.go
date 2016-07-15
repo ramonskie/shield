@@ -298,7 +298,7 @@ func getS3ConnInfo(e plugin.ShieldEndpoint) (S3ConnectionInfo, error) {
 		return S3ConnectionInfo{}, err
 	}
 
-	disable_ssl, err := e.BooleanValueDefault("skip_ssl_validation", DefaultSkipSSL)
+	disable_ssl, err := e.BooleanValueDefault("skip_ssl", DefaultSkipSSL)
 	if err != nil {
 		return S3ConnectionInfo{}, err
 	}
