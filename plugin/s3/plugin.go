@@ -197,11 +197,11 @@ func (p S3Plugin) Validate(endpoint plugin.ShieldEndpoint) error {
 		ansi.Printf("@G{\u2713 skip_ssl_validation}  @C{no}, SSL @Y{WILL} be validated\n")
 	}
 
-	tf, err := endpoint.BooleanValueDefault("skip_ssl", DefaultSkipSSL)
+	tfc, err := endpoint.BooleanValueDefault("skip_ssl", DefaultSkipSSL)
 	if err != nil {
 		ansi.Printf("@R{\u2717 skip_ssl  %s}\n", err)
 		fail = true
-	} else if tf {
+	} else if tfc {
 		ansi.Printf("@G{\u2713 skip_ssl}  @C{yes}, SSL will @Y{NOT} be disabled\n")
 	} else {
 		ansi.Printf("@G{\u2713 skip_ssl}  @C{no}, SSL @Y{WILL} be disabled\n")
@@ -379,8 +379,8 @@ func (s3 S3ConnectionInfo) Connect() (*minio.Client, error) {
 
 	if s3.SkipSSL == false {
 		s3Client.SetCustomTransport(transport)
-	} else {
-		s3Client
+	//} else {
+	//	s3Client
 	}
 
 	return s3Client, nil
